@@ -36,5 +36,6 @@ impl Error for IpcError {
 
 #[repr(u64)]
 pub enum ProtocolErrorCode {
-    MethodNotFound = 1,
+    DeserializeError = 1,
+    OtherEndClosed = 2,
 }

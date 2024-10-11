@@ -9,5 +9,5 @@ edition = "2021"
 # TODO: update it to ckb-std 0.16.0 when it's published
 ckb-std = { git = "https://github.com/nervosnetwork/ckb-std.git", default-features = false, features = ["allocator", "ckb-types", "dummy-atomic"], rev = "548a42b" }
 
-serde = { version = "1.0.208", default-features = false }
-serde_molecule = { version = "1.0.1" }
+serde = { version = "1.0.208", default-features = false, features = ["derive"] }
+serde_molecule = { version = "1.1.0", default-features = false, features = ["alloc"] }

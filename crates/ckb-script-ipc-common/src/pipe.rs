@@ -24,6 +24,12 @@ impl Pipe {
     }
 }
 
+impl From<u64> for Pipe {
+    fn from(id: u64) -> Self {
+        Self::new(id)
+    }
+}
+
 impl Read for Pipe {
     type Error = IpcError;
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {

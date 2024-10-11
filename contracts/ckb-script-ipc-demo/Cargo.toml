@@ -4,4 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ckb-std = "0.15.1"
+# TODO: update it to ckb-std 0.16.0 when it's published
+ckb-std = { git = "https://github.com/nervosnetwork/ckb-std.git", default-features = false, features = ["allocator", "ckb-types", "dummy-atomic"], rev = "548a42b" }
+ckb-script-ipc-common = { path = "../../crates/ckb-script-ipc-common" }
+serde = { version = "1.0.208", default-features = false, features = ["derive"] }

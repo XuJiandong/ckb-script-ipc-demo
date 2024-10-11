@@ -3,6 +3,7 @@ extern crate alloc;
 use crate::error::IpcError;
 use crate::io::{BufRead, Read, Seek, SeekFrom, Write};
 use alloc::boxed::Box;
+use alloc::vec::Vec;
 
 impl<T: ?Sized + Read> Read for Box<T> {
     type Error = T::Error;

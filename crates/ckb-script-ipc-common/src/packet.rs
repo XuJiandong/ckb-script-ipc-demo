@@ -1,3 +1,6 @@
+use alloc::vec;
+use alloc::vec::Vec;
+
 use crate::utils::read_exact;
 use crate::vlq::{vlq_decode, vlq_encode};
 use crate::{error::IpcError, io::Read};

@@ -1,3 +1,5 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+extern crate alloc;
 pub mod channel;
 pub mod error;
 pub mod io;

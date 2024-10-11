@@ -17,13 +17,36 @@ impl Channel {
 }
 
 impl Channel {
-    pub fn execute<'de, Req, Resp, S>(self, _serve: S)
+    /// Execute a server loop
+    /// 1. receive request
+    /// 2. call serve method
+    /// 3. send response
+    /// 4. continue
+    pub fn execute<Req, Resp, S>(mut self, serve: &mut S) -> Result<(), IpcError>
     where
-        Req: Serialize + for<'d> Deserialize<'de>,
-        Resp: Serialize + for<'d> Deserialize<'de>,
-        S: Serve<'de, Req = Req, Resp = Resp>,
+        Req: Serialize + for<'de> Deserialize<'de>,
+        Resp: Serialize + for<'de> Deserialize<'de>,
+        S: Serve<Req = Req, Resp = Resp>,
     {
-        todo!()
+        loop {
+            let req: Req = self.receive_request()?;
+            let resp = serve.serve(req)?;
+            self.send_response(0, resp)?;
+        }
+    }
+    // used for client
+    pub fn call<Req, Resp>(
+        &mut self,
+        _method_name: &'static str,
+        req: Req,
+    ) -> Result<Resp, IpcError>
+    where
+        Req: Serialize + for<'de> Deserialize<'de>,
+        Resp: Serialize + for<'de> Deserialize<'de>,
+    {
+        // TODO: method name can be used for debugging
+        self.send_request(req)?;
+        self.receive_response()
     }
     pub fn send_request<Req: Serialize>(&mut self, req: Req) -> Result<(), IpcError> {
         let serialized_req = to_vec(&req, false).map_err(|_| IpcError::SerializeError)?;

@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use crate::error::IpcError;
 /// Encodes an integer using VLQ (Variable-Length Quantity) encoding.
 pub fn vlq_encode(mut value: u64) -> Vec<u8> {

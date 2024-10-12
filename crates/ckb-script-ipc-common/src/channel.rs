@@ -34,7 +34,7 @@ impl Channel {
             let result = self
                 .receive_request()
                 .and_then(|req| serve.serve(req).map_err(Into::into))
-                .and_then(|resp| self.send_response(ProtocolErrorCode::Ok, resp));
+                .and_then(|resp| self.send_response(resp));
 
             match result {
                 Ok(_) => continue,
@@ -63,7 +63,7 @@ impl Channel {
             Ok(resp) => Ok(resp),
             Err(e) => {
                 #[cfg(feature = "enable-logging")]
-                log::error!("Error in call: {:?}", e);
+                log::error!("Error in call({}): {:?}", _method_name, e);
                 Err(e)
             }
         }
@@ -78,13 +78,9 @@ impl Channel {
         self.writer.write(&bytes)?;
         Ok(())
     }
-    pub fn send_response<Resp: Serialize>(
-        &mut self,
-        error_code: ProtocolErrorCode,
-        resp: Resp,
-    ) -> Result<(), IpcError> {
+    pub fn send_response<Resp: Serialize>(&mut self, resp: Resp) -> Result<(), IpcError> {
         let serialized_resp = to_vec(&resp, false).map_err(|_| IpcError::SerializeError)?;
-        let packet = ResponsePacket::new(error_code as u64, serialized_resp);
+        let packet = ResponsePacket::new(0, serialized_resp);
         #[cfg(feature = "enable-logging")]
         log::info!("send response: {:?}", packet);
 

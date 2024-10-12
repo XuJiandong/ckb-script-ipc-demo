@@ -1,11 +1,5 @@
 use alloc::{ffi::CString, format, string::String};
-use ckb_std::{
-    ckb_constants::Source,
-    env::argv,
-    high_level::inherited_fds,
-    log::info,
-    logger,
-};
+use ckb_std::{ckb_constants::Source, env::argv, high_level::inherited_fds, log::info, logger};
 
 use crate::error::Error;
 
@@ -125,7 +119,8 @@ pub fn client_entry() -> Result<(), Error> {
         0,
         Source::CellDep,
         &[CString::new("demo").unwrap().as_ref()],
-    ).map_err(|_| Error::CkbSysError)?;
+    )
+    .map_err(|_| Error::CkbSysError)?;
 
     let mut client = WorldClient::new(read_pipe.into(), write_pipe.into());
     let ret = client.hello("world".into()).unwrap();

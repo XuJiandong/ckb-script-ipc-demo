@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 extern crate alloc;
 pub mod bufreader;
 pub mod channel;

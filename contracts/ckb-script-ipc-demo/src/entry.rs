@@ -165,7 +165,7 @@ pub fn entry() -> Result<(), Error> {
     drop(logger::init());
 
     let argv = argv();
-    if argv.is_empty() {
+    if !argv.is_empty() {
         server_entry()?;
     } else {
         client_entry()?;

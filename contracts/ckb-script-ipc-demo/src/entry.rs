@@ -43,12 +43,6 @@ where
 {
     type Req = WorldRequest;
     type Resp = WorldResponse;
-
-    fn method(&self, req: &WorldRequest) -> Option<&'static str> {
-        match req {
-            WorldRequest::Hello { .. } => Some("World.hello"),
-        }
-    }
     fn serve(&mut self, req: Self::Req) -> Result<Self::Resp, IpcError> {
         match req {
             WorldRequest::Hello { name } => {
@@ -155,7 +149,7 @@ pub fn client_entry() -> Result<(), Error> {
     let (read_pipe, write_pipe) = spawn_server()?;
 
     let mut client = WorldClient::new(read_pipe.into(), write_pipe.into());
-    let ret = client.hello("world".into());
+    let ret = client.hello("world".into()).unwrap();
     info!("IPC response: {:?}", ret);
     Ok(())
 }

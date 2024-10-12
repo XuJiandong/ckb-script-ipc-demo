@@ -18,7 +18,6 @@ pub trait Packet {
 
 pub struct RequestPacket {
     version: u8,
-    // todo: removed?
     method_id: u64,
     payload: Vec<u8>,
 }

@@ -1,7 +1,7 @@
-use alloc::{ffi::CString, format, string::String};
-use ckb_std::{ckb_constants::Source, env::argv, high_level::inherited_fds, log::info, logger};
-
 use crate::error::Error;
+use alloc::{ffi::CString, format, string::String};
+use ckb_script_ipc_common::spawn::spawn_server;
+use ckb_std::{ckb_constants::Source, env::argv, high_level::inherited_fds, log::info, logger};
 
 // before proc-macro expansion
 // #[derive(CkbScriptIpc)]
@@ -14,9 +14,7 @@ use crate::error::Error;
 // ---------------------------------
 // start of auto generated code
 // ---------------------------------
-use ckb_script_ipc_common::{
-    channel::Channel, error::IpcError, ipc::Serve, pipe::Pipe, spawn::spawn_server,
-};
+use ckb_script_ipc_common::{channel::Channel, error::IpcError, ipc::Serve, pipe::Pipe};
 use serde::{Deserialize, Serialize};
 
 trait World: Sized {

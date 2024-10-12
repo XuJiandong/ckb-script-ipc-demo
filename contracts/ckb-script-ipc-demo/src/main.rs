@@ -17,9 +17,6 @@ default_alloc!();
 pub fn program_entry() -> i8 {
     match entry::entry() {
         Ok(_) => 0,
-        Err(e) => match e {
-            error::Error::CkbSysError(_) => 1,
-            _ => 100,
-        },
+        Err(e) => e as i8,
     }
 }

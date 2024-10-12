@@ -1,13 +1,14 @@
-use crate::error::Error;
 use alloc::{ffi::CString, format, string::String, vec::Vec};
-use ckb_script_ipc_common::{channel::Channel, error::IpcError, ipc::Serve, pipe::Pipe};
-use ckb_std::ckb_constants::Source;
 use ckb_std::{
-    debug,
+    ckb_constants::Source,
     env::argv,
-    syscalls::{self, inherited_fds, pipe},
+    high_level::inherited_fds,
+    log::info,
+    logger,
+    syscalls::{self, pipe},
 };
-use serde::{Deserialize, Serialize};
+
+use crate::error::Error;
 
 // before proc-macro expansion
 // #[derive(CkbScriptIpc)]
@@ -20,6 +21,9 @@ use serde::{Deserialize, Serialize};
 // ---------------------------------
 // start of auto generated code
 // ---------------------------------
+use ckb_script_ipc_common::{channel::Channel, error::IpcError, ipc::Serve, pipe::Pipe};
+use serde::{Deserialize, Serialize};
+
 trait World: Sized {
     fn hello(&self, name: String) -> Result<String, u64>;
 
@@ -84,8 +88,9 @@ impl WorldClient {
             .call::<_, WorldResponse>("World.hello", request);
         match resp {
             Ok(WorldResponse::Hello(ret)) => ret,
-            // TODO: use a better error code
-            Err(_) => return Err(2),
+            Err(e) => {
+                panic!("IPC error: {:?}", e);
+            }
         }
     }
 }
@@ -107,9 +112,9 @@ impl World for WorldServer {
 }
 
 pub fn server_entry() -> Result<(), Error> {
-    debug!("server started");
-    let mut fds = [0u64; 2];
-    inherited_fds(&mut fds);
+    info!("server started");
+    let fds = inherited_fds();
+    assert_eq!(fds.len(), 2);
     let channel = Channel::new(fds[0].into(), fds[1].into());
     channel
         .execute(&mut WorldServer.server())
@@ -120,11 +125,11 @@ pub fn server_entry() -> Result<(), Error> {
 fn spawn_server() -> Result<(u64, u64), Error> {
     let (r1, w1) = match pipe() {
         Ok(v) => v,
-        Err(e) => return Err(Error::CkbSysError(e)),
+        Err(_) => return Err(Error::CkbSysError),
     };
     let (r2, w2) = match pipe() {
         Ok(v) => v,
-        Err(e) => return Err(Error::CkbSysError(e)),
+        Err(_) => return Err(Error::CkbSysError),
     };
     let inherited_fds = &[r2, w1];
 
@@ -140,24 +145,27 @@ fn spawn_server() -> Result<(u64, u64), Error> {
         inherited_fds: inherited_fds.as_ptr(),
     };
     // spawn itself
-    syscalls::spawn(0, Source::CellDep, 0, 0, &mut spgs).map_err(|e| Error::CkbSysError(e))?;
+    syscalls::spawn(0, Source::CellDep, 0, 0, &mut spgs).map_err(|_| Error::CkbSysError)?;
     Ok((r1, w2))
 }
 
 pub fn client_entry() -> Result<(), Error> {
-    debug!("client started");
+    info!("client started");
 
     let (read_pipe, write_pipe) = spawn_server()?;
 
     let mut client = WorldClient::new(read_pipe.into(), write_pipe.into());
-    let ret = client.hello("world".into()).unwrap();
-    debug!("client ret: {}", ret);
+    let ret = client.hello("world".into());
+    info!("IPC response: {:?}", ret);
     Ok(())
 }
 
 pub fn entry() -> Result<(), Error> {
+    // enable logging by default
+    drop(logger::init());
+
     let argv = argv();
-    if argv.len() > 1 {
+    if argv.is_empty() {
         server_entry()?;
     } else {
         client_entry()?;

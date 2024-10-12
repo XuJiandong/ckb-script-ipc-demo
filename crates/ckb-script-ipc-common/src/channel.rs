@@ -51,6 +51,9 @@ impl Channel {
     pub fn send_request<Req: Serialize>(&mut self, req: Req) -> Result<(), IpcError> {
         let serialized_req = to_vec(&req, false).map_err(|_| IpcError::SerializeError)?;
         let packet = RequestPacket::new(serialized_req);
+        #[cfg(feature = "enable-logging")]
+        log::info!("send request: {:?}", packet);
+
         let bytes = packet.serialize();
         self.writer.write(&bytes)?;
         Ok(())
@@ -62,18 +65,27 @@ impl Channel {
     ) -> Result<(), IpcError> {
         let serialized_resp = to_vec(&resp, false).map_err(|_| IpcError::SerializeError)?;
         let packet = ResponsePacket::new(error_code, serialized_resp);
+        #[cfg(feature = "enable-logging")]
+        log::info!("send response: {:?}", packet);
+
         let bytes = packet.serialize();
         self.writer.write(&bytes)?;
         Ok(())
     }
     pub fn receive_request<Req: for<'de> Deserialize<'de>>(&mut self) -> Result<Req, IpcError> {
         let packet = RequestPacket::read_from(&mut self.reader)?;
-        let req = from_slice(&packet.payload(), false).map_err(|_| IpcError::DeserializeError)?;
+        #[cfg(feature = "enable-logging")]
+        log::info!("receive request: {:?}", packet);
+
+        let req = from_slice(packet.payload(), false).map_err(|_| IpcError::DeserializeError)?;
         Ok(req)
     }
     pub fn receive_response<Resp: for<'de> Deserialize<'de>>(&mut self) -> Result<Resp, IpcError> {
         let packet = ResponsePacket::read_from(&mut self.reader)?;
-        let resp = from_slice(&packet.payload(), false).map_err(|_| IpcError::DeserializeError)?;
+        #[cfg(feature = "enable-logging")]
+        log::info!("receive response: {:?}", packet);
+
+        let resp = from_slice(packet.payload(), false).map_err(|_| IpcError::DeserializeError)?;
         Ok(resp)
     }
 }

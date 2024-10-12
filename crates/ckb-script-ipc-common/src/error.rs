@@ -20,6 +20,7 @@ pub enum IpcError {
     SliceWriteError,
     ReadUntilError,
     ReadExactError,
+    BufReaderError,
 }
 
 impl Display for IpcError {

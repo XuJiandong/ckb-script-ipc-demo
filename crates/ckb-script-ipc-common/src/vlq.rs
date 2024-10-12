@@ -37,6 +37,8 @@ pub fn vlq_decode(bytes: &[u8]) -> Result<u64, IpcError> {
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
+
     use super::*;
 
     #[test]

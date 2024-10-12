@@ -1,5 +1,7 @@
 use alloc::vec;
 use alloc::vec::Vec;
+use core::fmt::{Debug, Formatter, Result as FmtResult};
+use hex;
 
 use crate::utils::read_exact;
 use crate::vlq::{vlq_decode, vlq_encode};
@@ -19,6 +21,12 @@ pub struct RequestPacket {
     // todo: removed?
     method_id: u64,
     payload: Vec<u8>,
+}
+
+impl Debug for RequestPacket {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "RequestPacket, payload: {}", hex::encode(&self.payload))
+    }
 }
 
 impl Packet for RequestPacket {
@@ -67,6 +75,17 @@ pub struct ResponsePacket {
     version: u8,
     error_code: u64,
     payload: Vec<u8>,
+}
+
+impl Debug for ResponsePacket {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(
+            f,
+            "ResponsePacket, error_code: {}, payload: {}",
+            self.error_code,
+            hex::encode(&self.payload)
+        )
+    }
 }
 
 impl Packet for ResponsePacket {

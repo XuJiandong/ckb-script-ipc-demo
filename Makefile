@@ -65,7 +65,7 @@ run:
 # test, check, clippy and fmt here are provided for completeness,
 # there is nothing wrong invoking cargo directly instead of make.
 test:
-	cargo test $(CARGO_ARGS)
+	cargo test $(CARGO_ARGS) -- --nocapture
 
 check:
 	cargo check $(CARGO_ARGS)
@@ -119,8 +119,13 @@ generate:
 		mv Cargo.toml.new Cargo.toml; \
 	fi
 
+debugger:
+	ckb-debugger --bin build/release/ckb-script-ipc-demo
+
 prepare:
 	rustup target add riscv64imac-unknown-none-elf
+	cargo install --git https://github.com/nervosnetwork/ckb-standalone-debugger ckb-debugger
+
 
 # Generate checksum info for reproducible build
 CHECKSUM_FILE := build/checksums-$(MODE).txt

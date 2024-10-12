@@ -1,12 +1,5 @@
-use alloc::{ffi::CString, format, string::String, vec::Vec};
-use ckb_std::{
-    ckb_constants::Source,
-    env::argv,
-    high_level::inherited_fds,
-    log::info,
-    logger,
-    syscalls::{self, pipe},
-};
+use alloc::{ffi::CString, format, string::String};
+use ckb_std::{ckb_constants::Source, env::argv, high_level::inherited_fds, log::info, logger};
 
 use crate::error::Error;
 
@@ -21,7 +14,9 @@ use crate::error::Error;
 // ---------------------------------
 // start of auto generated code
 // ---------------------------------
-use ckb_script_ipc_common::{channel::Channel, error::IpcError, ipc::Serve, pipe::Pipe};
+use ckb_script_ipc_common::{
+    channel::Channel, error::IpcError, ipc::Serve, pipe::Pipe, spawn::spawn_server,
+};
 use serde::{Deserialize, Serialize};
 
 trait World: Sized {
@@ -116,37 +111,16 @@ pub fn server_entry() -> Result<(), Error> {
     Ok(())
 }
 
-fn spawn_server() -> Result<(u64, u64), Error> {
-    let (r1, w1) = match pipe() {
-        Ok(v) => v,
-        Err(_) => return Err(Error::CkbSysError),
-    };
-    let (r2, w2) = match pipe() {
-        Ok(v) => v,
-        Err(_) => return Err(Error::CkbSysError),
-    };
-    let inherited_fds = &[r2, w1];
-
-    let arg1 = CString::new("demo").unwrap();
-    let argv = &[arg1.as_c_str()];
-    let argc = argv.len();
-    let mut process_id: u64 = 0;
-    let argv_ptr: Vec<*const i8> = argv.iter().map(|e| e.as_ptr()).collect();
-    let mut spgs = syscalls::SpawnArgs {
-        argc: argc as u64,
-        argv: argv_ptr.as_ptr(),
-        process_id: &mut process_id as *mut u64,
-        inherited_fds: inherited_fds.as_ptr(),
-    };
-    // spawn itself
-    syscalls::spawn(0, Source::CellDep, 0, 0, &mut spgs).map_err(|_| Error::CkbSysError)?;
-    Ok((r1, w2))
-}
-
 pub fn client_entry() -> Result<(), Error> {
     info!("client started");
 
-    let (read_pipe, write_pipe) = spawn_server()?;
+    // server can be spawned by any process which wants to start it.
+    let (read_pipe, write_pipe) = spawn_server(
+        0,
+        Source::CellDep,
+        &[CString::new("demo").unwrap().as_ref()],
+    )
+    .map_err(|_| Error::CkbSysError)?;
 
     let mut client = WorldClient::new(read_pipe.into(), write_pipe.into());
     let ret = client.hello("world".into()).unwrap();

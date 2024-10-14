@@ -13,3 +13,4 @@ members = [ "crates/ckb-script-ipc-common",
 overflow-checks = true
 strip = true
 codegen-units = 1
+panic = "abort"

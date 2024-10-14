@@ -1,7 +1,8 @@
-use crate::error::Error;
 use alloc::{ffi::CString, format, string::String};
-use ckb_script_ipc_common::spawn::spawn_server;
+use ckb_script_ipc_common::{channel::Channel, spawn::spawn_server};
 use ckb_std::{ckb_constants::Source, env::argv, high_level::inherited_fds, log::info, logger};
+
+use crate::error::Error;
 
 // before proc-macro expansion
 // #[derive(CkbScriptIpc)]
@@ -14,13 +15,9 @@ use ckb_std::{ckb_constants::Source, env::argv, high_level::inherited_fds, log::
 // ---------------------------------
 // start of auto generated code
 // ---------------------------------
-use ckb_script_ipc_common::{channel::Channel, error::IpcError, ipc::Serve, pipe::Pipe};
-use serde::{Deserialize, Serialize};
-
 trait World: Sized {
     fn hello(&self, name: String) -> Result<String, u64>;
 
-    // added
     fn server(self) -> ServeWorld<Self> {
         ServeWorld { service: self }
     }
@@ -30,13 +27,16 @@ struct ServeWorld<S> {
     service: S,
 }
 
-impl<S> Serve for ServeWorld<S>
+impl<S> ckb_script_ipc_common::ipc::Serve for ServeWorld<S>
 where
     S: World + Sized,
 {
     type Req = WorldRequest;
     type Resp = WorldResponse;
-    fn serve(&mut self, req: Self::Req) -> Result<Self::Resp, IpcError> {
+    fn serve(
+        &mut self,
+        req: Self::Req,
+    ) -> Result<Self::Resp, ckb_script_ipc_common::error::IpcError> {
         match req {
             WorldRequest::Hello { name } => {
                 let ret = self.service.hello(name);
@@ -45,24 +45,28 @@ where
         }
     }
 }
-#[derive(Serialize, Deserialize)]
+
+#[derive(serde::Serialize, serde::Deserialize)]
 enum WorldRequest {
     Hello { name: String },
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 enum WorldResponse {
     Hello(Result<String, u64>),
 }
 
 struct WorldClient {
-    channel: Channel,
+    channel: ckb_script_ipc_common::channel::Channel,
 }
 
 impl WorldClient {
-    fn new(read: Pipe, write: Pipe) -> Self {
+    fn new(
+        read: ckb_script_ipc_common::pipe::Pipe,
+        write: ckb_script_ipc_common::pipe::Pipe,
+    ) -> Self {
         Self {
-            channel: Channel::new(read, write),
+            channel: ckb_script_ipc_common::channel::Channel::new(read, write),
         }
     }
 }
@@ -70,7 +74,7 @@ impl WorldClient {
 impl WorldClient {
     fn hello(&mut self, name: String) -> Result<String, u64> {
         let request = WorldRequest::Hello { name };
-        let resp: Result<_, IpcError> = self
+        let resp: Result<_, ckb_script_ipc_common::error::IpcError> = self
             .channel
             .call::<_, WorldResponse>("World.hello", request);
         match resp {
